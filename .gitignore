@@ -1,4 +1,6 @@
 .vscode
 .DS_Store
 .github/copilot-instructions.md
+notes
 **/target
+**/*secret*.yaml
