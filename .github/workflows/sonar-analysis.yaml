@@ -25,13 +25,13 @@ jobs:
           cache: maven
       - id: copy-project-sources
         run: |
-            cp -R bankaccount-api/src ./bankaccount-api/src
-            cp -R bankaccount-api/pom.xml ./bankaccount-api/pom.xml
-            cp -R payment-api/src ./payment-api/src
-            cp -R payment-api/pom.xml ./payment-api/pom.xml
-            cp -R payment-bff/src ./payment-bff/src
-            cp -R payment-bff/pom.xml ./payment-bff/pom.xml
-            cp sonar-project.properties ./
+            cp -R bankaccount-api/src ${{ github.workspace }}/bankaccount-api/src
+            cp -R bankaccount-api/pom.xml ${{ github.workspace }}/bankaccount-api/pom.xml
+            cp -R payment-api/src ${{ github.workspace }}/payment-api/src
+            cp -R payment-api/pom.xml ${{ github.workspace }}/payment-api/pom.xml
+            cp -R payment-bff/src ${{ github.workspace }}/payment-bff/src
+            cp -R payment-bff/pom.xml ${{ github.workspace }}/payment-bff/pom.xml
+            cp sonar-project.properties .
 
       - id: cache-sonar
         uses: actions/cache@v4
