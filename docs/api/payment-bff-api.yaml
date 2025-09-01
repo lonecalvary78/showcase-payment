@@ -1,0 +1,348 @@
+openapi: 3.0.3
+info:
+  title: Payment BFF API
+  description: |
+    Backend for Frontend (BFF) API for the Payment Showcase application.
+    This service orchestrates payment operations by integrating with the 
+    Bank Account API and Payment API services. It provides a simplified 
+    interface for frontend applications to process payments with built-in 
+    account validation and balance checking.
+  version: 1.0.0
+  contact:
+    name: Payment Showcase Team
+    email: support@payment-showcase.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: http://payment-bff-service:8080
+    description: Kubernetes cluster service
+
+# Global security requirement for protected endpoints
+security:
+  - EntraIdOidc: []
+  - BearerAuth: []
+
+paths:
+  /payments:
+    get:
+      summary: Health check endpoint
+      description: Basic health check endpoint returning service status
+      operationId: getPaymentBffStatus
+      tags:
+        - Service Status
+      security: []  # Public endpoint - no authentication required
+      responses:
+        '200':
+          description: Service is operational
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "ok"
+
+    post:
+      summary: Submit a new payment
+      description: |
+        Submit a new payment request for processing. This endpoint will:
+        1. Validate the payment request
+        2. Check account balance in the Bank Account API
+        3. Submit the payment to the Payment API for processing
+        4. Return the result to the client
+      operationId: submitNewPayment
+      tags:
+        - Payment Operations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequestDTO'
+            examples:
+              standard_payment:
+                summary: Standard payment request
+                value:
+                  debittedAccountNo: "ACC123456"
+                  creditedAccountNo: "ACC789012"
+                  creditedAmount: 150.75
+                  paymentPurpose: "Invoice payment"
+                  paymentReference: "INV-2024-001"
+              salary_payment:
+                summary: Salary payment
+                value:
+                  debittedAccountNo: "BUS123456"
+                  creditedAccountNo: "EMP789012"
+                  creditedAmount: 3500.00
+                  paymentPurpose: "Monthly salary"
+                  paymentReference: "SAL-2024-03-001"
+              vendor_payment:
+                summary: Vendor payment
+                value:
+                  debittedAccountNo: "BUS123456"
+                  creditedAccountNo: "VEN456789"
+                  creditedAmount: 12500.50
+                  paymentPurpose: "Service payment"
+                  paymentReference: "SRV-2024-Q1-015"
+      responses:
+        '201':
+          description: Payment submitted successfully and is being processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Payment submitted successfully"
+                  reference:
+                    type: string
+                    example: "INV-2024-001"
+                  status:
+                    type: string
+                    example: "SUBMITTED"
+        '400':
+          description: Bad request - invalid payment data or insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                insufficient_funds:
+                  summary: Insufficient account balance
+                  value:
+                    error: "Insufficient funds"
+                    message: "Account balance is insufficient for this payment amount"
+                invalid_amount:
+                  summary: Invalid payment amount
+                  value:
+                    error: "Invalid amount"
+                    message: "Payment amount must be positive and greater than zero"
+                missing_fields:
+                  summary: Missing required fields
+                  value:
+                    error: "Validation error"
+                    message: "Required fields are missing: debittedAccountNo, creditedAmount"
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                account_not_found:
+                  summary: Account does not exist
+                  value:
+                    error: "Account not found"
+                    message: "The specified account number does not exist"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                bank_service_error:
+                  summary: Bank Account service unavailable
+                  value:
+                    error: "Service unavailable"
+                    message: "Bank Account service is currently unavailable"
+                payment_service_error:
+                  summary: Payment service error
+                  value:
+                    error: "Payment processing error"
+                    message: "Unable to process payment due to downstream service error"
+                generic_error:
+                  summary: Generic internal error
+                  value:
+                    error: "Internal server error"
+                    message: "An unexpected error occurred while processing the request"
+
+  /observe/health/live:
+    get:
+      summary: Liveness probe endpoint
+      description: Health check endpoint for Kubernetes liveness probe
+      operationId: getLivenessHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+  /observe/health/ready:
+    get:
+      summary: Readiness probe endpoint
+      description: Health check endpoint for Kubernetes readiness probe
+      operationId: getReadinessHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is ready to accept traffic
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+components:
+  securitySchemes:
+    EntraIdOidc:
+      type: openIdConnect
+      openIdConnectUrl: https://login.microsoftonline.com/{tenant-id}/v2.0/.well-known/openid_configuration
+      description: Microsoft Entra ID OpenID Connect authentication
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from Microsoft Entra ID
+  
+  schemas:
+    PaymentRequestDTO:
+      type: object
+      required:
+        - debittedAccountNo
+        - creditedAccountNo
+        - creditedAmount
+        - paymentPurpose
+        - paymentReference
+      properties:
+        debittedAccountNo:
+          type: string
+          description: Account number from which the payment will be debited
+          pattern: '^[A-Z0-9]{6,12}$'
+          example: "ACC123456"
+        creditedAccountNo:
+          type: string
+          description: Account number to which the payment will be credited
+          pattern: '^[A-Z0-9]{6,12}$'
+          example: "ACC789012"
+        creditedAmount:
+          type: number
+          format: double
+          description: Amount to be transferred (must be positive)
+          minimum: 0.01
+          maximum: 999999.99
+          example: 150.75
+        paymentPurpose:
+          type: string
+          description: Purpose or description of the payment
+          minLength: 1
+          maxLength: 255
+          example: "Invoice payment"
+        paymentReference:
+          type: string
+          description: Reference number or identifier for the payment
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z0-9\-_]{1,50}$'
+          example: "INV-2024-001"
+      example:
+        debittedAccountNo: "ACC123456"
+        creditedAccountNo: "ACC789012"
+        creditedAmount: 150.75
+        paymentPurpose: "Invoice payment"
+        paymentReference: "INV-2024-001"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type or category
+          example: "Insufficient funds"
+        message:
+          type: string
+          description: Detailed error message
+          example: "Account balance is insufficient for this payment amount"
+      example:
+        error: "Insufficient funds"
+        message: "Account balance is insufficient for this payment amount"
+
+    PaymentSubmissionResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Success message
+          example: "Payment submitted successfully"
+        reference:
+          type: string
+          description: Payment reference number
+          example: "INV-2024-001"
+        status:
+          type: string
+          description: Submission status
+          enum:
+            - SUBMITTED
+            - PROCESSING
+          example: "SUBMITTED"
+      example:
+        message: "Payment submitted successfully"
+        reference: "INV-2024-001"
+        status: "SUBMITTED"
+
+  examples:
+    StandardPaymentRequest:
+      summary: Standard payment request
+      value:
+        debittedAccountNo: "ACC123456"
+        creditedAccountNo: "ACC789012"
+        creditedAmount: 150.75
+        paymentPurpose: "Invoice payment"
+        paymentReference: "INV-2024-001"
+
+    SalaryPayment:
+      summary: Monthly salary payment
+      value:
+        debittedAccountNo: "BUS123456"
+        creditedAccountNo: "EMP789012"
+        creditedAmount: 3500.00
+        paymentPurpose: "Monthly salary"
+        paymentReference: "SAL-2024-03-001"
+
+    VendorPayment:
+      summary: Vendor service payment
+      value:
+        debittedAccountNo: "BUS123456"
+        creditedAccountNo: "VEN456789"
+        creditedAmount: 12500.50
+        paymentPurpose: "Service payment"
+        paymentReference: "SRV-2024-Q1-015"
+
+    SmallPayment:
+      summary: Small amount payment
+      value:
+        debittedAccountNo: "ACC123456"
+        creditedAccountNo: "ACC999888"
+        creditedAmount: 5.99
+        paymentPurpose: "Coffee reimbursement"
+        paymentReference: "REIMB-001"
+
+tags:
+  - name: Payment Operations
+    description: Core payment processing operations
+  - name: Service Status
+    description: Service health and status endpoints
+  - name: Health
+    description: Health check endpoints for monitoring and orchestration
+
+externalDocs:
+  description: Payment Showcase Documentation
+  url: https://github.com/lonecalvary78/showcase-payment

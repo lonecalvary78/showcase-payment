@@ -1,0 +1,212 @@
+openapi: 3.0.3
+info:
+  title: Bank Account API
+  description: |
+    A RESTful API for managing bank account operations within the Payment Showcase application.
+    This service provides account balance inquiries and supports account verification.
+  version: 1.0.0
+  contact:
+    name: Payment Showcase Team
+    email: support@payment-showcase.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8181
+    description: Local development server
+  - url: http://bankaccount-api-service:8181
+    description: Kubernetes cluster service
+
+paths:
+  /bankaccounts/balances:
+    get:
+      summary: Get account balance
+      description: Retrieve the current available balance for a specific bank account
+      operationId: getAccountBalance
+      tags:
+        - Account Balance
+      parameters:
+        - name: accountNo
+          in: query
+          required: true
+          description: The account number to query balance for
+          schema:
+            type: string
+            pattern: '^[A-Z0-9]{6,12}$'
+            example: "ACC123456"
+          examples:
+            standard:
+              value: "ACC123456"
+              summary: Standard account number
+            business:
+              value: "BUS789012"
+              summary: Business account number
+      responses:
+        '200':
+          description: Account balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountBalanceDTO'
+              examples:
+                standard_account:
+                  summary: Standard account with balance
+                  value:
+                    accountNo: "ACC123456"
+                    availableBalance: 1500.75
+                zero_balance:
+                  summary: Account with zero balance
+                  value:
+                    accountNo: "ACC123456"
+                    availableBalance: 0.0
+                high_balance:
+                  summary: Account with high balance
+                  value:
+                    accountNo: "BUS789012"
+                    availableBalance: 250000.00
+        '400':
+          description: Bad request - invalid or missing account number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_account:
+                  summary: Missing account number
+                  value:
+                    code: "MISSING_ACCOUNT_NUMBER"
+                    message: "Account number is required"
+                invalid_format:
+                  summary: Invalid account number format
+                  value:
+                    code: "INVALID_ACCOUNT_FORMAT"
+                    message: "Account number must be 6-12 alphanumeric characters"
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                account_not_found:
+                  summary: Account does not exist
+                  value:
+                    code: "ACCOUNT_NOT_FOUND"
+                    message: "Account with number ACC123456 was not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                server_error:
+                  summary: Generic server error
+                  value:
+                    code: "INTERNAL_ERROR"
+                    message: "An unexpected error occurred while processing the request"
+
+  /observe/health/live:
+    get:
+      summary: Liveness probe endpoint
+      description: Health check endpoint for Kubernetes liveness probe
+      operationId: getLivenessHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+  /observe/health/ready:
+    get:
+      summary: Readiness probe endpoint
+      description: Health check endpoint for Kubernetes readiness probe
+      operationId: getReadinessHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is ready to accept traffic
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+components:
+  schemas:
+    AccountBalanceDTO:
+      type: object
+      required:
+        - accountNo
+        - availableBalance
+      properties:
+        accountNo:
+          type: string
+          description: The account number
+          pattern: '^[A-Z0-9]{6,12}$'
+          example: "ACC123456"
+        availableBalance:
+          type: number
+          format: double
+          description: The available balance in the account
+          minimum: 0
+          example: 1500.75
+      example:
+        accountNo: "ACC123456"
+        availableBalance: 1500.75
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code identifying the type of error
+          example: "MISSING_ACCOUNT_NUMBER"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Account number is required"
+      example:
+        code: "MISSING_ACCOUNT_NUMBER"
+        message: "Account number is required"
+
+  examples:
+    StandardAccount:
+      summary: Standard customer account
+      value:
+        accountNo: "ACC123456"
+        availableBalance: 1500.75
+
+    BusinessAccount:
+      summary: Business account with high balance
+      value:
+        accountNo: "BUS789012"
+        availableBalance: 250000.00
+
+    ZeroBalanceAccount:
+      summary: Account with zero balance
+      value:
+        accountNo: "ACC987654"
+        availableBalance: 0.0
+
+tags:
+  - name: Account Balance
+    description: Operations related to account balance inquiries
+  - name: Health
+    description: Health check endpoints for monitoring and orchestration

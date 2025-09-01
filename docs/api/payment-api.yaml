@@ -1,0 +1,309 @@
+openapi: 3.0.3
+info:
+  title: Payment API
+  description: |
+    A RESTful API for processing payments within the Payment Showcase application.
+    This service handles payment processing, validation, and storage using DynamoDB.
+  version: 1.0.0
+  contact:
+    name: Payment Showcase Team
+    email: support@payment-showcase.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8282
+    description: Local development server
+  - url: http://payment-api-service:8282
+    description: Kubernetes cluster service
+
+paths:
+  /payments:
+    get:
+      summary: Health check endpoint
+      description: Basic health check endpoint returning service status
+      operationId: getPaymentServiceStatus
+      tags:
+        - Service Status
+      responses:
+        '200':
+          description: Service is operational
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+
+    post:
+      summary: Process a payment
+      description: |
+        Process a new payment request. The payment will be validated, 
+        processed through the banking host system, and stored in the database.
+        Uses circuit breaker pattern for resilience.
+      operationId: processPayment
+      tags:
+        - Payment Processing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentDTO'
+            examples:
+              standard_payment:
+                summary: Standard payment between accounts
+                value:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  debittedAccountNo: "ACC123456"
+                  creditedAccountNo: "ACC789012"
+                  creditedAmount: 150.75
+                  paymentPurpose: "Invoice payment"
+                  paymentReference: "INV-2024-001"
+                  status: "PENDING"
+              large_payment:
+                summary: Large payment transaction
+                value:
+                  id: "456e7890-e12c-34d5-b678-901234567890"
+                  debittedAccountNo: "BUS123456"
+                  creditedAccountNo: "BUS789012"
+                  creditedAmount: 50000.00
+                  paymentPurpose: "Business transfer"
+                  paymentReference: "BT-2024-Q1-001"
+                  status: "PENDING"
+      responses:
+        '200':
+          description: Payment processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentDTO'
+              examples:
+                successful_payment:
+                  summary: Successfully processed payment
+                  value:
+                    id: "123e4567-e89b-12d3-a456-426614174000"
+                    debittedAccountNo: "ACC123456"
+                    creditedAccountNo: "ACC789012"
+                    creditedAmount: 150.75
+                    paymentPurpose: "Invoice payment"
+                    paymentReference: "INV-2024-001"
+                    status: "COMPLETED"
+        '400':
+          description: Bad request - invalid payment data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_payment:
+                  summary: Missing payment request
+                  value:
+                    code: "MISSING_PAYMENT_REQUEST"
+                    message: "Payment request body is required"
+                invalid_amount:
+                  summary: Invalid payment amount
+                  value:
+                    code: "INVALID_AMOUNT"
+                    message: "Payment amount must be positive"
+                invalid_account:
+                  summary: Invalid account number
+                  value:
+                    code: "INVALID_ACCOUNT"
+                    message: "Account number format is invalid"
+        '403':
+          description: Forbidden - payment not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                insufficient_funds:
+                  summary: Insufficient funds
+                  value:
+                    code: "INSUFFICIENT_FUNDS"
+                    message: "Account balance is insufficient for this payment"
+                account_blocked:
+                  summary: Account blocked
+                  value:
+                    code: "ACCOUNT_BLOCKED"
+                    message: "Source account is blocked for payments"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                circuit_breaker_open:
+                  summary: Circuit breaker is open
+                  value:
+                    code: "SERVICE_UNAVAILABLE"
+                    message: "Payment service is temporarily unavailable"
+                database_error:
+                  summary: Database connection error
+                  value:
+                    code: "DATABASE_ERROR"
+                    message: "Unable to process payment due to database connectivity issues"
+
+  /observe/health/live:
+    get:
+      summary: Liveness probe endpoint
+      description: Health check endpoint for Kubernetes liveness probe
+      operationId: getLivenessHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+  /observe/health/ready:
+    get:
+      summary: Readiness probe endpoint
+      description: Health check endpoint for Kubernetes readiness probe
+      operationId: getReadinessHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is ready to accept traffic
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+components:
+  schemas:
+    PaymentDTO:
+      type: object
+      required:
+        - debittedAccountNo
+        - creditedAccountNo
+        - creditedAmount
+        - paymentPurpose
+        - paymentReference
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the payment (auto-generated if not provided)
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        debittedAccountNo:
+          type: string
+          description: Account number from which the payment is debited
+          pattern: '^[A-Z0-9]{6,12}$'
+          example: "ACC123456"
+        creditedAccountNo:
+          type: string
+          description: Account number to which the payment is credited
+          pattern: '^[A-Z0-9]{6,12}$'
+          example: "ACC789012"
+        creditedAmount:
+          type: number
+          format: double
+          description: Amount to be transferred
+          minimum: 0.01
+          maximum: 999999.99
+          example: 150.75
+        paymentPurpose:
+          type: string
+          description: Purpose or description of the payment
+          minLength: 1
+          maxLength: 255
+          example: "Invoice payment"
+        paymentReference:
+          type: string
+          description: Reference number or identifier for the payment
+          minLength: 1
+          maxLength: 50
+          example: "INV-2024-001"
+        status:
+          type: string
+          description: Current status of the payment
+          enum:
+            - PENDING
+            - PROCESSING
+            - COMPLETED
+            - FAILED
+            - CANCELLED
+          example: "PENDING"
+      example:
+        id: "123e4567-e89b-12d3-a456-426614174000"
+        debittedAccountNo: "ACC123456"
+        creditedAccountNo: "ACC789012"
+        creditedAmount: 150.75
+        paymentPurpose: "Invoice payment"
+        paymentReference: "INV-2024-001"
+        status: "PENDING"
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code identifying the type of error
+          example: "MISSING_PAYMENT_REQUEST"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Payment request body is required"
+      example:
+        code: "MISSING_PAYMENT_REQUEST"
+        message: "Payment request body is required"
+
+  examples:
+    StandardPayment:
+      summary: Standard payment transaction
+      value:
+        id: "123e4567-e89b-12d3-a456-426614174000"
+        debittedAccountNo: "ACC123456"
+        creditedAccountNo: "ACC789012"
+        creditedAmount: 150.75
+        paymentPurpose: "Invoice payment"
+        paymentReference: "INV-2024-001"
+        status: "PENDING"
+
+    BusinessPayment:
+      summary: Large business payment
+      value:
+        id: "456e7890-e12c-34d5-b678-901234567890"
+        debittedAccountNo: "BUS123456"
+        creditedAccountNo: "BUS789012"
+        creditedAmount: 50000.00
+        paymentPurpose: "Business transfer"
+        paymentReference: "BT-2024-Q1-001"
+        status: "PENDING"
+
+    CompletedPayment:
+      summary: Successfully completed payment
+      value:
+        id: "123e4567-e89b-12d3-a456-426614174000"
+        debittedAccountNo: "ACC123456"
+        creditedAccountNo: "ACC789012"
+        creditedAmount: 150.75
+        paymentPurpose: "Invoice payment"
+        paymentReference: "INV-2024-001"
+        status: "COMPLETED"
+
+tags:
+  - name: Payment Processing
+    description: Operations related to payment processing and validation
+  - name: Service Status
+    description: Service health and status endpoints
+  - name: Health
+    description: Health check endpoints for monitoring and orchestration
