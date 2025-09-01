@@ -17,6 +17,8 @@
         <mainClass>dev.lonecalvary78.app.payment.PaymentBFFApplication</mainClass>
         <helidon.version>4.2.6</helidon.version>
         <logback.version>1.5.18</logback.version>
+        <!-- Sonar Analysis -->
+        <sonar.projectKey>lonecalvary78_showcase-payment</sonar.projectKey>
     </properties>
 
     <dependencyManagement>
@@ -161,6 +163,40 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <version>3.5.1</version>
+          </plugin>
+          <plugin>
+              <groupId>org.jacoco</groupId>
+              <artifactId>jacoco-maven-plugin</artifactId>
+              <version>0.8.13</version>
+              <executions>
+                <execution>
+                    <id>prepare-agent</id>
+                    <goals>
+                        <goal>prepare-agent</goal>
+                    </goals>
+                </execution>
+                <execution>
+                    <id>report</id>
+                    <phase>prepare-package</phase>
+                    <goals>
+                        <goal>report</goal>
+                    </goals>
+                </execution>
+              </executions>
+              <configuration>
+                <rules>
+                    <rule>
+                        <element>PACKAGE</element>
+                        <limits>
+                            <limit>
+                                <counter>LINE</counter>
+                                <value>COVEREDRATIO</value>
+                                <minimum>0.80</minimum>
+                            </limit>
+                        </limits>
+                    </rule>
+                </rules>                
+              </configuration>
           </plugin>
        </plugins>
     </build>
