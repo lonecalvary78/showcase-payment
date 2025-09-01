@@ -23,16 +23,6 @@ jobs:
           distribution: 'liberica'
           java-version: '21'
           cache: maven
-      - id: copy-project-sources
-        run: |
-            cp -R bankaccount-api/src ${{ github.workspace }}/bankaccount-api/src
-            cp -R bankaccount-api/pom.xml ${{ github.workspace }}/bankaccount-api/pom.xml
-            cp -R payment-api/src ${{ github.workspace }}/payment-api/src
-            cp -R payment-api/pom.xml ${{ github.workspace }}/payment-api/pom.xml
-            cp -R payment-bff/src ${{ github.workspace }}/payment-bff/src
-            cp -R payment-bff/pom.xml ${{ github.workspace }}/payment-bff/pom.xml
-            cp sonar-project.properties .
-
       - id: cache-sonar
         uses: actions/cache@v4
         with:
@@ -49,7 +39,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-            mvn clean compile -f bankaccount-api/pom.xml
-            mvn clean compile -f payment-api/pom.xml
-            mvn clean compile -f payment-bff/pom.xml
+            mvn clean test -f bankaccount-api/pom.xml
+            mvn clean test -f payment-api/pom.xml
+            mvn clean test -f payment-bff/pom.xml
             mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=lonecalvary78_showcase-payment
