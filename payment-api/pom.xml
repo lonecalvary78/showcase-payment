@@ -19,6 +19,7 @@
         <aws-sdk.version>2.32.31</aws-sdk.version>
         <lombok.version>1.18.38</lombok.version>
         <mapstruct.version>1.6.3</mapstruct.version>
+        <logback.version>1.5.18</logback.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -46,10 +47,6 @@
             <artifactId>helidon-http-media-jsonb</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.helidon.logging</groupId>
-            <artifactId>helidon-logging-jul</artifactId>
-        </dependency>
-        <dependency>
             <groupId>io.helidon.webserver.observe</groupId>
             <artifactId>helidon-webserver-observe-health</artifactId>
         </dependency>        
@@ -73,6 +70,25 @@
             <groupId>io.helidon.openapi</groupId>
             <artifactId>helidon-openapi</artifactId>
         </dependency>
+        <!-- Logging -->
+        <dependency>
+            <groupId>io.helidon.logging</groupId>
+            <artifactId>helidon-logging-slf4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <!-- Logging END -->        
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>dynamodb</artifactId>
@@ -96,14 +112,7 @@
             <version>${mapstruct.version}</version>
             <scope>provided</scope>
         </dependency>
-        
-        <!-- Testing Dependencies -->
-        <dependency>
-            <groupId>io.helidon.webserver</groupId>
-            <artifactId>helidon-webserver-security</artifactId>
-            <version>${helidon.version}</version>
-        </dependency>
-        
+                
         <!-- Test Dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

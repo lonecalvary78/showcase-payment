@@ -1,6 +1,7 @@
 package dev.lonecalvary78.app.payment.internal.processing.service;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dev.lonecalvary78.app.payment.internal.processing.facade.PaymentFacade;
 import dev.lonecalvary78.app.payment.internal.processing.facade.PaymentFacadeImpl;
@@ -10,7 +11,7 @@ import io.helidon.config.Config;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 public class PaymentService {
-    private final Logger logger = Logger.getLogger(PaymentService.class.getName());
+    private final Logger logger = LoggerFactory.getLogger(PaymentService.class);
     private PaymentFacade paymentFacade;
 
     public PaymentService(DynamoDbClient dbClient) {

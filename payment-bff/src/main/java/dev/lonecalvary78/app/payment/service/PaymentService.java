@@ -1,7 +1,9 @@
 package dev.lonecalvary78.app.payment.service;
 
 import java.math.BigDecimal;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dev.lonecalvary78.app.payment.integration.APIClientUtil;
 import dev.lonecalvary78.app.payment.model.dto.AccountBalanceDTO;
@@ -14,12 +16,37 @@ import io.helidon.webclient.api.HttpClientResponse;
  * Service for handling payment operations.
  */
 public class PaymentService {
-    private final Logger logger = Logger.getLogger(PaymentService.class.getName());
+    private final Logger logger = LoggerFactory.getLogger(PaymentService.class);
     
     public void submitNewPayment(PaymentRequestDTO paymentRequestDTO, String userSubject) throws Exception {
+        // Validate input parameters
+        validatePaymentRequest(paymentRequestDTO);
+        
         logger.info("submitNewPayment for payment reference: " + paymentRequestDTO.paymentReference() + " by user: " + userSubject);
         checkAccountBalance(paymentRequestDTO.debittedAccountNo(), paymentRequestDTO.creditedAmount());
         processNewPayment(paymentRequestDTO);
+    }
+    
+    private void validatePaymentRequest(PaymentRequestDTO paymentRequestDTO) throws Exception {
+        if (paymentRequestDTO == null) {
+            throw new IllegalArgumentException("Payment request cannot be null");
+        }
+        
+        if (paymentRequestDTO.debittedAccountNo() == null || paymentRequestDTO.debittedAccountNo().trim().isEmpty()) {
+            throw new IllegalArgumentException("Debited account number cannot be null or empty");
+        }
+        
+        if (paymentRequestDTO.creditedAccountNo() == null || paymentRequestDTO.creditedAccountNo().trim().isEmpty()) {
+            throw new IllegalArgumentException("Credited account number cannot be null or empty");
+        }
+        
+        if (paymentRequestDTO.creditedAmount() == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
+        
+        if (paymentRequestDTO.creditedAmount() <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
     }
 
     private void checkAccountBalance(String debitedAccountNo, Double debitedAmount) throws Exception {
@@ -40,9 +67,9 @@ public class PaymentService {
             } else {
                 throw new RuntimeException("Failed to check account balance: " + response.status());
             }
-        } catch (Exception e) {
-            logger.severe("Error calling bank account service: " + e.getMessage());
-            throw new RuntimeException("Error calling bank account service", e);
+        } catch (Exception thrownException) {
+            logger.error("checkAccountBalance[errorMessage: {}]",thrownException.getMessage(),thrownException);
+            throw thrownException; // Re-throw the exception
         }
 
         if(accountBalanceDTO != null) {
@@ -70,9 +97,8 @@ public class PaymentService {
             } else {
                 throw new RuntimeException("Failed to process payment: " + response.status());
             }
-        } catch (Exception e) {
-            logger.severe("Error calling payment service: " + e.getMessage());
-            throw new RuntimeException("Error calling payment service", e);
+        } catch (Exception thrownException) {
+            logger.error("processNewPayment[errorMessage: {}]",thrownException.getMessage(), thrownException);
         }
     }
 }

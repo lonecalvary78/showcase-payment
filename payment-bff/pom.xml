@@ -16,6 +16,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <mainClass>dev.lonecalvary78.app.payment.PaymentBFFApplication</mainClass>
         <helidon.version>4.2.6</helidon.version>
+        <logback.version>1.5.18</logback.version>
     </properties>
 
     <dependencyManagement>
@@ -44,10 +45,6 @@
             <artifactId>helidon-http-media-jsonb</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.helidon.logging</groupId>
-            <artifactId>helidon-logging-jul</artifactId>
-        </dependency>
-        <dependency>
             <groupId>io.helidon.webserver.observe</groupId>
             <artifactId>helidon-webserver-observe-health</artifactId>
         </dependency>
@@ -63,6 +60,25 @@
             <groupId>io.helidon.openapi</groupId>
             <artifactId>helidon-openapi</artifactId>
         </dependency>
+        <!-- Logging -->
+        <dependency>
+            <groupId>io.helidon.logging</groupId>
+            <artifactId>helidon-logging-slf4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <!-- Logging END -->        
         <dependency>
             <groupId>io.helidon.webclient</groupId>
             <artifactId>helidon-webclient</artifactId>

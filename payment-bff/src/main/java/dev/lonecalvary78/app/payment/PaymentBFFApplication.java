@@ -1,25 +1,26 @@
 package dev.lonecalvary78.app.payment;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dev.lonecalvary78.app.payment.handler.PaymentRoutingHandler;
 import io.helidon.common.config.Config;
 import io.helidon.logging.common.LogConfig;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
 
-import java.util.logging.Logger;
-
 /**
  * Payment BFF Application for handling payment frontend requests.
  */
 public class PaymentBFFApplication {
     
-    private static final Logger LOGGER = Logger.getLogger(PaymentBFFApplication.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(PaymentBFFApplication.class);
     
     public static void main(String[] args) {
         LogConfig.configureRuntime();
         var appConfig = Config.create();
         
-        LOGGER.info("Starting Payment BFF...");
+        logger.info("Starting Payment BFF...");
         
         var appServer = WebServer.builder()
             .config(appConfig.get("server"))
@@ -28,10 +29,10 @@ public class PaymentBFFApplication {
             
         appServer.start();
         
-        LOGGER.info("Payment BFF started successfully");
+        logger.info("Payment BFF started successfully");
         
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            LOGGER.info("Shutting down Payment BFF...");
+            logger.info("Shutting down Payment BFF...");
             appServer.stop();
         }));
     }
