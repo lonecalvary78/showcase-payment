@@ -31,7 +31,8 @@ class PaymentServiceTest {
     void shouldThrowExceptionForNullPaymentRequest() {
         // When & Then
         assertThatThrownBy(() -> paymentService.submitNewPayment(null, "test-user"))
-            .isInstanceOf(Exception.class);
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Payment request cannot be null");
     }
 
     @Test
@@ -49,7 +50,8 @@ class PaymentServiceTest {
         // Note: This test will fail in integration without real services
         // but tests the method structure and parameter validation
         assertThatThrownBy(() -> paymentService.submitNewPayment(paymentRequest, "test-user"))
-            .isInstanceOf(Exception.class);
+            .isInstanceOf(Exception.class)
+            .hasMessageContaining("Connection refused");
     }
 
     @Test
@@ -66,7 +68,8 @@ class PaymentServiceTest {
         
         // When & Then
         assertThatThrownBy(() -> paymentService.submitNewPayment(paymentRequest, "test-user"))
-            .isInstanceOf(Exception.class);
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Amount must be greater than zero");
     }
 
     @Test
@@ -83,7 +86,8 @@ class PaymentServiceTest {
         
         // When & Then
         assertThatThrownBy(() -> paymentService.submitNewPayment(paymentRequest, "test-user"))
-            .isInstanceOf(Exception.class);
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Amount must be greater than zero");
     }
 
     @Test
@@ -100,7 +104,8 @@ class PaymentServiceTest {
         
         // When & Then
         assertThatThrownBy(() -> paymentService.submitNewPayment(paymentRequest, "test-user"))
-            .isInstanceOf(Exception.class);
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Debited account number cannot be null or empty");
     }
 
     @Test
@@ -117,6 +122,7 @@ class PaymentServiceTest {
         
         // When & Then
         assertThatThrownBy(() -> paymentService.submitNewPayment(paymentRequest, "test-user"))
-            .isInstanceOf(Exception.class);
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Debited account number cannot be null or empty");
     }
 }
