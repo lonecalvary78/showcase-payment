@@ -12,6 +12,8 @@
         <java.version>21</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <mainClass>dev.lonecalvary78.app.payment.PaymentBFFApplication</mainClass>
         <helidon.version>4.2.6</helidon.version>
     </properties>
