@@ -23,7 +23,6 @@ servers:
 
 # Global security requirement for protected endpoints
 security:
-  - EntraIdOidc: []
   - BearerAuth: []
 
 paths:
@@ -200,15 +199,11 @@ paths:
 
 components:
   securitySchemes:
-    EntraIdOidc:
-      type: openIdConnect
-      openIdConnectUrl: https://login.microsoftonline.com/{tenant-id}/v2.0/.well-known/openid_configuration
-      description: Microsoft Entra ID OpenID Connect authentication
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JWT token obtained from Microsoft Entra ID
+      description: Internal JWT token for service authentication
   
   schemas:
     PaymentRequestDTO:

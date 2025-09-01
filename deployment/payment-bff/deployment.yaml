@@ -25,22 +25,6 @@ spec:
               value: "http://bankaccount-api-service:8181"
             - name: INTEGRATION_PAYMENT_ENDPOINT
               value: "http://payment-api-service:8282"
-            # Microsoft Entra ID Configuration
-            - name: ENTRA_TENANT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: entra-id-secrets
-                  key: tenant-id
-            - name: ENTRA_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: entra-id-secrets
-                  key: client-id
-            - name: ENTRA_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: entra-id-secrets
-                  key: client-secret
           resources:
             requests:
               memory: "256Mi"
