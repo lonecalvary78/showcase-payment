@@ -18,7 +18,8 @@
         <helidon.version>4.2.6</helidon.version>
         <logback.version>1.5.18</logback.version>
         <!-- Sonar Analysis -->
-        <sonar.projectKey>lonecalvary78_showcase-payment</sonar.projectKey>
+        <sonar.organization>lonecalvary78</sonar.organization>
+
     </properties>
     <dependencyManagement>
         <dependencies>
