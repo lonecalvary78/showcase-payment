@@ -6,8 +6,8 @@ namespace: payment-showcase
 resources:
   - namespace.yaml
   - localstack.yaml
-  - bankaccount/deployment.yaml
-  - bankaccount/service.yaml
+  - bankaccount-api/deployment.yaml
+  - bankaccount-api/service.yaml
   - payment-api/configmap.yaml
   - payment-api/deployment.yaml
   - payment-api/service.yaml
