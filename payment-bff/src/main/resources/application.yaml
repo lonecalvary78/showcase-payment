@@ -1,6 +1,16 @@
 server:
   port: 8080
-
+  concurrency-limit:
+    fixed:
+      permits: 1000
+      queue-length: 200
+      queue-timeout: PT1S
+  features: 
+    observe:
+      observers:
+        health:
+          details: true
+                
 integration:
   bankaccount:
     endpoint: "http://localhost:8181"

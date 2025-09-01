@@ -1,20 +1,17 @@
 server:
   port: 8282
+  concurrency-limit:
+    fixed:
+      permits: 1000
+      queue-length: 200
+      queue-timeout: PT1S
+        
   features: 
     observe:
       observers:
         health:
           details: true
-    security:
-      enabled: true
 
-# Internal JWT configuration for service-to-service authentication
-security:
-  internal-jwt:
-    secret: "${INTERNAL_JWT_SECRET:your-super-secure-secret-key-here-must-be-at-least-32-characters}"
-    issuer: "payment-showcase"
-    audience: "internal-apis"
-    expiration-minutes: 15
 
 circuit-breaker:
   volume-size: 10
