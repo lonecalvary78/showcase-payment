@@ -24,7 +24,7 @@ public class BankAccountApplication {
         
         var appServer = WebServer.builder()
                                  .config(appConfig.get("server"))
-                                 .routing(routingBuilder -> routing(routingBuilder))
+                                 .routing(BankAccountApplication::routing)
                                  .build();
         appServer.start();
         
