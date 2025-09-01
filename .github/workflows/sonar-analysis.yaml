@@ -35,11 +35,13 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - id: build-with-sonar
+      - id: build-and-test
+        run: |
+            mvn clean test jacoco:report -f bankaccount-api/pom.xml
+            mvn clean test jacoco:report -f payment-api/pom.xml
+            mvn clean test jacoco:report -f payment-bff/pom.xml
+      - id: sonarqube-scan
+        uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-            mvn clean test -f bankaccount-api/pom.xml
-            mvn clean test -f payment-api/pom.xml
-            mvn clean test -f payment-bff/pom.xml
-            mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=lonecalvary78_showcase-payment
+          SONAR_HOST_URL: https://sonarcloud.io
