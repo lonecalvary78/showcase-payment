@@ -1,0 +1,42 @@
+version: "3.8"
+services:
+  payment-bff:
+    image: payment-bff:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - bankaccount-api
+      - payment-api
+  payment-api:
+    image: payment-api:latest
+    ports:
+      - "8282:8282"
+    depends_on:
+      - localstack
+  bankaccount-api:
+    image: bankaccount-api:latest
+    ports:
+      - "8181:8181"
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+  localstack:
+    image: localstack/localstack:4.7
+    environment:
+      - SERVICES=dynamodb
+      - DEFAULT_REGION=us-east-1
+      - DATA_DIR=/tmp/localstack/data
+    ports:
+      - "4566:4566"
+    volumes:
+      - "./localstack-data:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"        
