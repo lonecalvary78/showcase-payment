@@ -1,6 +1,7 @@
 # Payment Showcase
 
 [![Test and Build Image](https://github.com/lonecalvary78/showcase-payment/actions/workflows/test-and-build-image.yaml/badge.svg)](https://github.com/lonecalvary78/showcase-payment/actions/workflows/test-and-build-image.yaml)
+[![sonar-analysis](https://github.com/lonecalvary78/showcase-payment/actions/workflows/sonar-analysis.yaml/badge.svg)](https://github.com/lonecalvary78/showcase-payment/actions/workflows/sonar-analysis.yaml)
 
 ## Table of Contents
 - [Introduction](#introduction)
