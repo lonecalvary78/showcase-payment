@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'payment-bff'
+    static_configs:
+      - targets: ['payment-bff:8080']
+  - job_name: 'payment-api'
+    static_configs:
+      - targets: ['payment-api:8282']
+  - job_name: 'bankaccount-api'
+    static_configs:
+      - targets: ['bankaccount-api:8181']
