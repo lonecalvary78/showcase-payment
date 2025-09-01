@@ -1,0 +1,71 @@
+name: Test and Build Image
+on:
+   push:
+      branches:
+        - master
+jobs:
+   unit-test:
+     runs-on: ubuntu-latest
+     permissions:
+       contents: read
+       packages: write
+     strategy:
+       matrix:
+          backend-name: [ "bankaccount-api", "payment-api", "payment-bff" ]
+     steps:
+       - id: project-checkout
+         uses: actions/checkout@v3
+       - id: jdk-setup
+         uses: actions/setup-java@v3
+         with:
+           distribution: 'liberica'
+           java-version: '21'
+           cache: maven
+       - id: copy-project-sources
+         run: |
+           cp -R ./${{ matrix.backend-name }}/src ./
+           cp -R ./${{ matrix.backend-name }}/pom.xml ./
+       - id: run-tests
+         run: mvn test
+
+   build-and-push:
+        needs: unit-test
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        strategy:
+            matrix:
+                backend-name: [ "bankaccount-api", "payment-api", "payment-bff" ]
+        steps:
+        - id: project-checkout
+          uses: actions/checkout@v3
+        - id: jdk-setup
+          uses: actions/setup-java@v3
+          with:
+            distribution: 'liberica'
+            java-version: '21'
+            cache: maven
+        - id: copy-project-sources
+          run: |
+            cp -R ./${{ matrix.backend-name }}/src ./
+            cp -R ./${{ matrix.backend-name }}/pom.xml ./
+        - id: maven-build
+          run: mvn package -DskipTests
+        - id: docker-login
+          uses: docker/login-action@v2
+          with:
+            registry: ghcr.io
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+        - id: docker-build-push
+          uses: docker/build-push-action@v4
+          with:
+            context: .
+            file: ./${{ matrix.backend-name }}/Dockerfile
+            push: true
+            build-args: |
+                BUILD_VERSION=latest
+                MAINTAINER_NAME=${{ github.repository_owner }}
+            tags: |
+                ghcr.io/${{ github.repository_owner }}/${{ matrix.backend-name }}:latest
