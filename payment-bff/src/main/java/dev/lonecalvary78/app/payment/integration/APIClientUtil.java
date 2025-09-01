@@ -8,9 +8,7 @@ import io.helidon.webclient.api.WebClient;
  */
 public class APIClientUtil {
     
-    private APIClientUtil() {
-        // Utility class
-    }
+    private APIClientUtil() {}
     
     public static WebClient newClientForBankAccount(Config apiClientConfig) {
         var bankAccountEndpointUri = apiClientConfig.get("bankaccount.endpoint").asString().get();
