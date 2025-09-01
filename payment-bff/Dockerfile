@@ -6,5 +6,5 @@ LABEL image.version="${BUILD_VERSION}"
 LABEL maintainer="${MAINTAINER_NAME}"
 COPY target/payment-bff-*.jar payment-bff.jar
 ENV USER_MEMORY="-Xms256m -Xmx512m"
-EXPOSE 8282
-ENTRYPOINT ["sh","-C","java","${USER_MEMORY}","-jar","/payment-bff.jar"]
+EXPOSE 8080
+ENTRYPOINT ["sh","-c","java ${USER_MEMORY} -jar /payment-bff.jar"]
