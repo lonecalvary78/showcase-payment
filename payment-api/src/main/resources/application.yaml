@@ -1,0 +1,38 @@
+server:
+  port: 8282
+  features: 
+    observe:
+      observers:
+        health:
+          details: true
+    security:
+      enabled: true
+
+# Internal JWT configuration for service-to-service authentication
+security:
+  internal-jwt:
+    secret: "${INTERNAL_JWT_SECRET:your-super-secure-secret-key-here-must-be-at-least-32-characters}"
+    issuer: "payment-showcase"
+    audience: "internal-apis"
+    expiration-minutes: 15
+
+circuit-breaker:
+  volume-size: 10
+  error-ratio: 30
+  delay-time: 200
+  success-threshold: 2
+
+db:
+   mode: localstack
+   localstack:
+     endpoint: http://localhost:4566
+     region: ap-southeast-1
+     accessKeyId: test
+     secretAccessKey: test
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    dev.lonecalvary78.app.payment.internal.processing: DEBUG
+    dev.lonecalvary78.app.payment.internal.processing.security: DEBUG          
