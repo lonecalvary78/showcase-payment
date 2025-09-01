@@ -27,7 +27,7 @@ public class PaymentApplication {
        
        var appServer = WebServer.builder()
            .config(appConfig.get("server"))
-           .routing(routingBuilder -> routing(routingBuilder, dbClient, appConfig))
+           .routing(routingBuilder -> routing(routingBuilder, dbClient))
            .build();
            
        appServer.start();
@@ -41,7 +41,7 @@ public class PaymentApplication {
        }));       
     }
 
-    private static void routing(HttpRouting.Builder routingBuilder, DynamoDbClient dbClient, Config config) {
+    private static void routing(HttpRouting.Builder routingBuilder, DynamoDbClient dbClient) {
         routingBuilder.register("/api/v1/payments", new PaymentResourceHandler(dbClient));
     }
 }

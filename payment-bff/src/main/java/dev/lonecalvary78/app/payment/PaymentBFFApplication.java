@@ -24,7 +24,7 @@ public class PaymentBFFApplication {
         
         var appServer = WebServer.builder()
             .config(appConfig.get("server"))
-            .routing(routingBuilder -> routing(routingBuilder, appConfig))
+            .routing(PaymentBFFApplication::routing)
             .build();
             
         appServer.start();
@@ -37,7 +37,7 @@ public class PaymentBFFApplication {
         }));
     }
 
-    private static void routing(HttpRouting.Builder routingBuilder, Config config) {
+    private static void routing(HttpRouting.Builder routingBuilder) {
         // Register handlers
         routingBuilder.register("/api/v1/payments", new PaymentRoutingHandler());
     }

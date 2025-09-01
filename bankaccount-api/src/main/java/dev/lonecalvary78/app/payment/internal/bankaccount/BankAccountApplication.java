@@ -24,7 +24,7 @@ public class BankAccountApplication {
         
         var appServer = WebServer.builder()
                                  .config(appConfig.get("server"))
-                                 .routing(routingBuilder -> routing(routingBuilder, appConfig))
+                                 .routing(routingBuilder -> routing(routingBuilder))
                                  .build();
         appServer.start();
         
@@ -36,7 +36,7 @@ public class BankAccountApplication {
         }));
     }
 
-    private static void routing(HttpRouting.Builder routingBuilder, Config config) {
+    private static void routing(HttpRouting.Builder routingBuilder) {
         routingBuilder.register("/api/v1/bankaccounts", new BankAccountResourceHandler());
     }
 }
