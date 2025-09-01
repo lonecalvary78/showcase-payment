@@ -351,7 +351,7 @@ docker-compose up
 ### Configuration
 For detailed configuration instructions including:
 - Environment variables
-- Security configuration  
+- Security configuration
 - Deployment considerations
 
 Refer to the configuration files in each service module.
