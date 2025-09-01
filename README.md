@@ -23,7 +23,7 @@ This is a showcase to demonstrate a modern **Payment API** system with enterpris
 
 ## Features
 - **🏗️ Microservices Architecture**: Three-tier service architecture with clear separation of concerns
-- **🔒 Enterprise Security**: Hybrid authentication with Microsoft Entra ID and internal JWT tokens
+- **🔒 Enterprise Security**: Secure service-to-service communication patterns
 - **🧪 Comprehensive Testing**: 101+ unit tests with modern testing frameworks (JUnit 5, Mockito, AssertJ)
 - **📚 Complete Documentation**: OpenAPI 3.0 specifications and detailed architectural documentation
 - **🚀 Production Ready**: Kubernetes deployment manifests with monitoring and observability
@@ -51,9 +51,7 @@ This is a showcase to demonstrate a modern **Payment API** system with enterpris
 ### Security & Authentication
 | Technology | Purpose |
 |------------|---------|
-| **Microsoft Entra ID** | Enterprise identity provider |
-| **MSAL** | Microsoft Authentication Library |
-| **JWT** | Internal service-to-service authentication |
+| **HTTP** | Direct service-to-service communication |
 
 ### DevOps & Operations
 | Tool | Purpose |
@@ -107,9 +105,7 @@ The Payment Showcase application implements a modern **microservices architectur
 - **Port**: 8080
 - **Purpose**: Orchestration layer and API gateway
 - **Responsibilities**:
-  - User authentication via Microsoft Entra ID
   - Request orchestration between services
-  - Internal JWT token generation
   - Business logic coordination
   - Error handling and response formatting
 
@@ -120,7 +116,6 @@ The Payment Showcase application implements a modern **microservices architectur
   - Payment transaction processing
   - Payment data persistence to DynamoDB
   - Payment status management
-  - Internal API authentication validation
   - Business rule enforcement
 
 #### 3. Bank Account API (Account Management)
@@ -128,9 +123,6 @@ The Payment Showcase application implements a modern **microservices architectur
 - **Purpose**: Account balance and validation service
 - **Responsibilities**:
   - Account balance retrieval
-  - Account validation
-  - Balance verification for payments
-  - Account information management
 
 #### 4. Supporting Infrastructure
 - **DynamoDB**: Primary data store for payment records
@@ -138,58 +130,111 @@ The Payment Showcase application implements a modern **microservices architectur
 - **Prometheus**: Metrics collection and monitoring
 - **Grafana**: Visualization and alerting dashboards
 
-### Security Architecture
-
-#### Hybrid Authentication Model
-The application implements a sophisticated **two-tier security model**:
-
-##### External Authentication (Client → BFF)
-- **Microsoft Entra ID (Azure AD)**: Enterprise identity provider
-- **MSAL Integration**: Microsoft Authentication Library
-- **OIDC/OAuth 2.0**: Standard authentication protocols
-- **Role-Based Access Control**: User permissions via Microsoft Graph
-
-##### Internal Authentication (BFF → APIs)
-- **Internal JWT Tokens**: Service-to-service authentication
-- **Short-lived Tokens**: 15-minute expiration for security
-- **Strong Cryptography**: HMAC-SHA512 signatures
-- **Service Authorization**: Validated service identity
-
-#### Security Configuration
-```yaml
-# Microsoft Entra ID Configuration
-msal:
-  tenant-id: "${ENTRA_TENANT_ID}"
-  client-id: "${ENTRA_CLIENT_ID}"
-  authority: "https://login.microsoftonline.com/${ENTRA_TENANT_ID}"
-
-# Internal JWT Configuration
-security:
-  internal-jwt:
-    secret: "${INTERNAL_JWT_SECRET}"
-    issuer: "payment-showcase"
-    audience: "internal-apis"
-    expiration-minutes: 15
-```
-
 ### Data Flow
 
 #### Payment Processing Flow
-1. **Authentication**: User authenticates via Microsoft Entra ID
-2. **Request Initiation**: Frontend sends payment request to Payment BFF
-3. **Token Generation**: BFF generates internal JWT for service calls
-4. **Balance Verification**: BFF calls Bank Account API to verify sufficient funds
-5. **Payment Processing**: BFF calls Payment API to process the transaction
-6. **Data Persistence**: Payment API stores transaction in DynamoDB
-7. **Response**: Success/failure response flows back through the chain
+1. **Request Initiation**: Client sends payment request to Payment BFF
+2. **Balance Verification**: BFF calls Bank Account API to verify sufficient funds
+3. **Payment Processing**: BFF calls Payment API to process the transaction
+4. **Data Persistence**: Payment API stores transaction in DynamoDB
+5. **Response**: Success/failure response flows back through the chain
 
 #### Service Communication Pattern
+
+##### High-Level Flow
 ```
-Client Request → Entra ID Auth → Payment BFF → Internal JWT → APIs → DynamoDB
-                                      ↓
-                              Balance Check (Bank Account API)
-                                      ↓
-                              Payment Processing (Payment API)
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│              │    │              │    │              │    │              │
+│    Client    │───▶│ Payment BFF  │───▶│   Service    │───▶│     APIs     │
+│              │    │ (Port 8080)  │    │     Calls    │    │              │
+│              │    │              │    │              │    │              │
+└──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘
+```
+
+##### Detailed Communication Flow
+```
+┌─────────────────┐
+│   Client App    │
+│  (Frontend/API) │
+└─────────┬───────┘
+          │ 1. POST /payments
+          │ (PaymentRequestDTO)
+          ▼
+┌─────────────────┐
+│   Payment BFF   │ ◄─── Entry Point & Orchestrator
+│   (Port 8080)   │
+└─────────┬───────┘
+          │ 2. Orchestrate Service Calls
+          │ (Direct HTTP requests)
+          ▼
+     ┌─────────────────────────────────┐
+     │     Service-to-Service Calls    │
+     │       (Direct HTTP Calls)       │
+     └─────────────────────────────────┘
+          │                    │
+          │ 3a. Check Balance  │ 3b. Process Payment
+          ▼                    ▼
+┌─────────────────┐    ┌─────────────────┐
+│ Bank Account    │    │   Payment API   │
+│ API (8181)      │    │   (Port 8282)   │
+│                 │    │                 │
+│ GET /balances   │    │ POST /payments  │
+│ ?accountNo=...  │    │                 │
+└─────────────────┘    └─────────┬───────┘
+          │                      │ 4. Persist Data
+          │                      ▼
+          │            ┌─────────────────┐
+          │            │    DynamoDB     │
+          │            │   (LocalStack)  │
+          │            │                 │
+          │            │ Store Payment   │
+          │            │   Transaction   │
+          │            └─────────────────┘
+          │
+          ▼
+    ┌─────────────────────────────────┐
+    │         Response Chain          │
+    │    (Success/Error Messages)     │
+    └─────────────────────────────────┘
+          │
+          ▼
+┌─────────────────┐
+│   Client App    │ ◄─── 5. Final Response
+│   (Response)    │      (201 Created or Error)
+└─────────────────┘
+```
+
+##### Service Call Pattern
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Payment BFF    │    │   HTTP Request  │    │   Target API    │
+│                 │    │                 │    │                 │
+│ 1. User Request │───▶│ 2. Direct HTTP  │───▶│ 3. Process      │
+│ 2. Build HTTP   │    │    - Headers    │    │    - Validate   │
+│    Request      │    │    - Body       │    │    - Execute    │
+│                 │    │    - Endpoint   │    │    - Response   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+##### Error Handling Pattern
+```
+┌─────────────────┐
+│   Any Service   │
+│   Encounters    │ ──┐
+│     Error       │   │
+└─────────────────┘   │
+                      │ Error Bubbles Up
+┌─────────────────┐   │
+│  Payment BFF    │ ◄─┘
+│  Error Handler  │ ──┐
+│                 │   │ Transform & Log
+└─────────────────┘   │
+                      │
+┌─────────────────┐   │
+│     Client      │ ◄─┘
+│ Receives HTTP   │    Structured Error Response
+│ Error Response  │    (400/500 with details)
+└─────────────────┘
 ```
 
 ### Technology Stack
@@ -204,9 +249,7 @@ Client Request → Entra ID Auth → Payment BFF → Internal JWT → APIs → D
 - **LocalStack**: Local AWS service emulation
 
 #### Security & Authentication
-- **Microsoft Entra ID**: Enterprise identity provider
-- **MSAL**: Microsoft Authentication Library
-- **JWT**: JSON Web Tokens for service authentication
+- **HTTP-based Communication**: Direct service-to-service HTTP calls
 
 #### DevOps & Operations
 - **Docker**: Containerization platform
@@ -300,51 +343,15 @@ docker-compose up
 # Grafana: http://localhost:3000
 ```
 
-#### 2. Manual Setup
-```bash
-# Build all modules
-mvn clean compile -f payment-bff/pom.xml
-mvn clean compile -f payment-api/pom.xml
-mvn clean compile -f bankaccount-api/pom.xml
-
-# Run tests
-mvn test -f payment-bff/pom.xml
-mvn test -f payment-api/pom.xml
-mvn test -f bankaccount-api/pom.xml
-
-# Start LocalStack (for DynamoDB)
-docker run -p 4566:4566 localstack/localstack
-
-# Start services (in separate terminals)
-java -jar payment-bff/target/payment-bff-*.jar
-java -jar payment-api/target/payment-api-*.jar
-java -jar bankaccount-api/target/bankaccount-api-*.jar
-```
-
-### Production Deployment
-
-#### Kubernetes Deployment
-```bash
-# Navigate to deployment directory
-cd deployment
-
-# Deploy to Kubernetes
-./deploy.sh
-
-# Or manually deploy
-kubectl apply -f namespace.yaml
-kubectl apply -f secrets.yaml
-kubectl apply -k .
-```
-
 ### API Documentation
 - **Payment BFF API**: [docs/api/payment-bff-api.yaml](docs/api/payment-bff-api.yaml)
 - **Payment API**: [docs/api/payment-api.yaml](docs/api/payment-api.yaml)
 - **Bank Account API**: [docs/api/bankaccount-api.yaml](docs/api/bankaccount-api.yaml)
 
 ### Configuration
-See the [Hybrid Security Architecture](HYBRID_SECURITY_ARCHITECTURE.md) document for detailed configuration instructions including:
-- Microsoft Entra ID setup
+For detailed configuration instructions including:
 - Environment variables
-- Security configuration
+- Security configuration  
 - Deployment considerations
+
+Refer to the configuration files in each service module.
