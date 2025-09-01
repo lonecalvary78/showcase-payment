@@ -37,9 +37,9 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - id: build-and-test
         run: |
-            mvn clean test jacoco:report -f bankaccount-api/pom.xml
-            mvn clean test jacoco:report -f payment-api/pom.xml
-            mvn clean test jacoco:report -f payment-bff/pom.xml
+            mvn clean test jacoco:report dependency:copy-dependencies -f bankaccount-api/pom.xml
+            mvn clean test jacoco:report dependency:copy-dependencies -f payment-api/pom.xml
+            mvn clean test jacoco:report dependency:copy-dependencies -f payment-bff/pom.xml
       - id: sonarqube-scan
         uses: sonarsource/sonarqube-scan-action@master
         env:
