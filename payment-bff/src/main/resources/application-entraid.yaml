@@ -1,0 +1,57 @@
+# Microsoft Entra ID Configuration for Payment BFF
+
+# Environment Variables (set in deployment)
+# ENTRA_TENANT_ID=your-tenant-id
+# ENTRA_CLIENT_ID=your-application-client-id  
+# ENTRA_CLIENT_SECRET=your-client-secret
+
+server:
+  port: 8080
+  features:
+    security:
+      enabled: true
+
+security:
+  providers:
+    - oidc:
+        # Microsoft Entra ID specific configuration
+        client-id: "${ENTRA_CLIENT_ID}"
+        client-secret: "${ENTRA_CLIENT_SECRET}"
+        identity-uri: "https://login.microsoftonline.com/${ENTRA_TENANT_ID}/v2.0"
+        audience: "api://payment-showcase"
+        
+        # Token validation
+        issuer: "https://login.microsoftonline.com/${ENTRA_TENANT_ID}/v2.0"
+        jwk-uri: "https://login.microsoftonline.com/${ENTRA_TENANT_ID}/discovery/v2.0/keys"
+        
+        # Optional: Role-based access control
+        # roles-claim: "roles"
+        # groups-claim: "groups"
+        
+        # Redirect URIs (for web applications)
+        redirect-uri: "https://payment-bff.yourcompany.com/oidc/redirect"
+        logout-uri: "https://payment-bff.yourcompany.com/oidc/logout"
+        
+        # Token caching and validation
+        cache-max-size: 1000
+        cache-evict-delay: "PT1H"
+        
+  web-server:
+    defaults:
+      authenticate: true
+    paths:
+      # Public paths (no authentication required)
+      - path: "/observe/health/*"
+        authenticate: false
+      - path: "/metrics"
+        authenticate: false
+      # Protected paths
+      - path: "/payments"
+        authenticate: true
+        roles: ["PaymentUser", "PaymentAdmin"]
+
+integration:
+  bankaccount:
+    endpoint: "http://localhost:8181"
+  payment:
+    endpoint: "http://localhost:8282"

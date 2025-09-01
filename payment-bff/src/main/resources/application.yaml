@@ -1,0 +1,8 @@
+server:
+  port: 8080
+
+integration:
+  bankaccount:
+    endpoint: "http://localhost:8181"
+  payment:
+    endpoint: "http://localhost:8282"
