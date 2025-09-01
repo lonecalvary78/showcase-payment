@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-api-service
+  labels:
+    app: payment-api
+spec:
+  selector:
+    app: payment-api
+  ports:
+    - name: http
+      port: 8282
+      targetPort: 8282
+      protocol: TCP
+  type: ClusterIP

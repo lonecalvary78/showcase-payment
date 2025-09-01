@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: localstack
+  namespace: payment-showcase
+  labels:
+    app: localstack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: localstack
+  template:
+    metadata:
+      labels:
+        app: localstack
+    spec:
+      containers:
+        - name: localstack
+          image: localstack/localstack:4.7
+          ports:
+            - containerPort: 4566
+          env:
+            - name: SERVICES
+              value: "dynamodb"
+            - name: DEFAULT_REGION
+              value: "us-east-1"
+            - name: DATA_DIR
+              value: "/tmp/localstack/data"
+            - name: DEBUG
+              value: "1"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: localstack-data
+              mountPath: /tmp/localstack
+      volumes:
+        - name: localstack-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: localstack
+  namespace: payment-showcase
+  labels:
+    app: localstack
+spec:
+  selector:
+    app: localstack
+  ports:
+    - name: api
+      port: 4566
+      targetPort: 4566
+      protocol: TCP
+  type: ClusterIP

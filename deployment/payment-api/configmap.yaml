@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-api-config
+data:
+  application.yaml: |
+    server:
+      port: 8282
+      features: 
+        observe:
+          observers:
+            health:
+              details: true
+
+    circuit-breaker:
+      volume-size: 10
+      error-ratio: 30
+      delay-time: 200
+      success-threshold: 2
+
+    db:
+       mode: localstack
+       localstack:
+         endpoint: http://localstack:4566
+         region: us-east-1
+         accessKeyId: test

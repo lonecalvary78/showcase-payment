@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: payment-showcase
+
+resources:
+  - namespace.yaml
+  - localstack.yaml
+  - bankaccount/deployment.yaml
+  - bankaccount/service.yaml
+  - payment-api/configmap.yaml
+  - payment-api/deployment.yaml
+  - payment-api/service.yaml
+  - payment-bff/configmap.yaml
+  - payment-bff/deployment.yaml
+  - payment-bff/service.yaml
+  - payment-bff/ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/name: payment-showcase
+  app.kubernetes.io/version: "1.0.0"
+  app.kubernetes.io/component: microservice
+
+images:
+  - name: ghcr.io/lonecalvary78/bankaccount-api
+    newTag: latest
+  - name: ghcr.io/lonecalvary78/payment-api
+    newTag: latest
+  - name: ghcr.io/lonecalvary78/payment-bff
+    newTag: latest
+
+replicas:
+  - name: payment-bff
+    count: 2
+  - name: payment-api
+    count: 1
+  - name: bankaccount-api
+    count: 1
+  - name: localstack
+    count: 1

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bankaccount-api-service
+  labels:
+    app: bankaccount-api
+spec:
+  selector:
+    app: bankaccount-api
+  ports:
+    - name: http
+      port: 8181
+      targetPort: 8181
+      protocol: TCP
+  type: ClusterIP

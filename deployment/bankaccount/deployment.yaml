@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bankaccount-api
+  labels:
+    app: bankaccount-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bankaccount-api
+  template:
+    metadata:
+      labels:
+        app: bankaccount-api
+    spec:
+      containers:
+        - name: bankaccount-api
+          image: ghcr.io/lonecalvary78/bankaccount-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8181
+          env:
+            - name: AWS_REGION
+              value: ${TARGET_REGION}
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /observe/health/live
+              port: 8181
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /observe/health/ready
+              port: 8181
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3

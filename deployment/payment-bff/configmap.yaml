@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-bff-config
+data:
+  application.yaml: |
+    server:
+      port: 8080
+
+    integration:
+      bankaccount:
+        endpoint: "http://bankaccount-api-service:8181"
+      payment:
+        endpoint: "http://payment-api-service:8282"
