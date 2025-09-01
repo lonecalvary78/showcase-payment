@@ -14,9 +14,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    strategy:
-      matrix:
-        backend-name: [ "bankaccount-api", "payment-api", "payment-bff" ]
     steps:
       - id: project-checkout
         uses: actions/checkout@v3
@@ -28,8 +25,13 @@ jobs:
           cache: maven
       - id: copy-project-sources
         run: |
-          cp -R ./${{ matrix.backend-name }}/src ./
-          cp -R ./${{ matrix.backend-name }}/pom.xml ./
+            cp -R ./bankaccount-api/src ./bankaccount-api/src
+            cp -R ./bankaccount-api/pom.xml ./bankaccount-api/pom.xml
+            cp -R ./payment-api/src ./payment-api/src
+            cp -R ./payment-api/pom.xml ./payment-api/pom.xml
+            cp -R ./payment-bff/src ./payment-bff/src
+            cp -R ./payment-bff/pom.xml ./payment-bff/pom.xml
+            cp ./sonar-project.properties ./
 
       - id: cache-sonar
         uses: actions/cache@v4
@@ -46,4 +48,8 @@ jobs:
       - id: build-with-sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=lonecalvary78_showcase-payment
+        run: |
+            mvn clean compile -f bankaccount-api/pom.xml
+            mvn clean compile -f payment-api/pom.xml
+            mvn clean compile -f payment-bff/pom.xml
+            mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=lonecalvary78_showcase-payment
